@@ -22,8 +22,8 @@ class ChatService:
         # 生成或获取session_id
         session_id = request.session_id or str(uuid.uuid4())
 
-        # 生成或获取user_id
-        user_id = request.user_id or "anonymous"
+        # 确保使用正确的user_id，而不是默认的"anonymous"
+        user_id = request.user_id or "user_ah72m2ejx"
 
         # 存储用户消息
         user_message_id = add_chat_message(

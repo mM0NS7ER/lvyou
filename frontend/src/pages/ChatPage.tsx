@@ -19,6 +19,12 @@ const ChatPage = () => {
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  
+  // 确保用户ID存在
+  const userId = localStorage.getItem('userId') || `user_${Math.random().toString(36).substr(2, 9)}`;
+  if (!localStorage.getItem('userId')) {
+    localStorage.setItem('userId', userId);
+  }
 
   // 获取聊天历史
   useEffect(() => {
@@ -66,6 +72,7 @@ const ChatPage = () => {
         body: JSON.stringify({
           message: originalMessage,
           session_id: sessionId,
+          user_id: userId,
         }),
       });
 

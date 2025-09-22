@@ -1,57 +1,108 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface ChatHistoryItem {
-  id: string;
+  session_id: string;
   title: string;
-  date: string;
-  preview: string;
+  timestamp: string;
 }
 
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
+  refreshKey?: number;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
-  // 模拟聊天历史数据
-  const [chatHistory] = useState<ChatHistoryItem[]>([
-    {
-      id: '1',
-      title: '劳动合同审查',
-      date: '2023-06-15',
-      preview: '审查了劳动合同中的竞业限制条款，建议修改...'
-    },
-    {
-      id: '2',
-      title: '供应商催款函',
-      date: '2023-06-14',
-      preview: '根据欠款情况生成了催款函，已发送至供应商...'
-    },
-    {
-      id: '3',
-      title: '买卖合同纠纷分析',
-      date: '2023-06-12',
-      preview: '分析了买卖合同纠纷的关键点，提供了法律建议...'
-    },
-    {
-      id: '4',
-      title: '租赁合同审查',
-      date: '2023-06-10',
-      preview: '审查了租赁合同的各项条款，指出了潜在风险...'
-    },
-    {
-      id: '5',
-      title: '知识产权咨询',
-      date: '2023-06-08',
-      preview: '关于商标注册和专利申请的专业建议...'
-    },
-    {
-      id: '6',
-      title: '公司法务咨询',
-      date: '2023-06-05',
-      preview: '关于公司设立和治理结构的问题解答...'
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, refreshKey = 0 }) => {
+  const [chatHistory, setChatHistory] = useState<ChatHistoryItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  // 获取当前用户ID
+  const userId = localStorage.getItem('userId');
+
+  // 获取聊天历史
+  useEffect(() => {
+    if (userId) {
+      fetchChatHistory(userId);
     }
-  ]);
+  }, [userId, refreshKey]); // 当refreshKey变化时重新获取聊天记录
+
+  const fetchChatHistory = async (id: string) => {
+    try {
+      setLoading(true);
+      // 首先获取会话列表
+      const sessionsResponse = await fetch(`/api/chat/sessions?user_id=${id}&limit=50`);
+      if (!sessionsResponse.ok) {
+        throw new Error(`HTTP error! status: ${sessionsResponse.status}`);
+      }
+      const sessionsData = await sessionsResponse.json();
+
+      // 为每个会话获取详细消息，找到第一条用户消息
+      const processedHistory = [];
+
+      for (const session of sessionsData.sessions) {
+        try {
+          // 获取该会话的所有消息
+          const messagesResponse = await fetch(`/api/chat/history?session_id=${session.session_id}&user_id=${id}&limit=100`);
+          if (!messagesResponse.ok) {
+            throw new Error(`HTTP error! status: ${messagesResponse.status}`);
+          }
+          const messagesData = await messagesResponse.json();
+
+          // 找到第一条用户消息
+          const firstUserMessage = messagesData.messages.find((msg: any) => msg.role === 'user');
+
+          // 使用第一条用户消息作为标题
+          const title = firstUserMessage && firstUserMessage.content.length > 20 
+            ? firstUserMessage.content.substring(0, 20) + '...' 
+            : (firstUserMessage ? firstUserMessage.content : '无标题');
+
+          processedHistory.push({
+            session_id: session.session_id,
+            title,
+            timestamp: session.timestamp
+          });
+        } catch (error) {
+          console.error(`获取会话 ${session.session_id} 的消息失败:`, error);
+          // 如果获取详细消息失败，使用最后一条消息作为标题
+          const title = session.last_message.length > 20 
+            ? session.last_message.substring(0, 20) + '...' 
+            : session.last_message;
+
+          processedHistory.push({
+            session_id: session.session_id,
+            title,
+            timestamp: session.timestamp
+          });
+        }
+      }
+
+      // 按时间戳降序排序
+      processedHistory.sort((a, b) => 
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      );
+
+      setChatHistory(processedHistory);
+    } catch (error) {
+      console.error('获取聊天历史失败:', error);
+      // 在实际应用中，这里可以显示错误信息
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChatClick = (sessionId: string) => {
+    navigate(`/chat/${sessionId}`);
+    onClose();
+  };
+
+  const handleNewChat = () => {
+    // 生成新的会话ID
+    const newSessionId = `session_${Date.now()}`;
+    navigate(`/chat/${newSessionId}`);
+    onClose();
+  };
 
   return (
     <>
@@ -73,7 +124,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         </div>
 
         <div className="sidebar-content">
-          <button className="new-chat-button">
+          <button className="new-chat-button" onClick={handleNewChat}>
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="12" y1="5" x2="12" y2="19"></line>
               <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -83,17 +134,23 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
           <div className="chat-history">
             <h3>聊天记录</h3>
-            <div className="history-list">
-              {chatHistory.map((item) => (
-                <div key={item.id} className="history-item">
-                  <div className="history-item-header">
-                    <span className="history-item-date">{item.date}</span>
+            {loading ? (
+              <div className="loading-indicator">加载中...</div>
+            ) : chatHistory.length === 0 ? (
+              <div className="empty-history">暂无聊天记录</div>
+            ) : (
+              <div className="history-list">
+                {chatHistory.map((item) => (
+                  <div 
+                    key={item.session_id} 
+                    className="history-item" 
+                    onClick={() => handleChatClick(item.session_id)}
+                  >
+                    <h4 className="history-item-title">{item.title}</h4>
                   </div>
-                  <h4 className="history-item-title">{item.title}</h4>
-                  <p className="history-item-preview">{item.preview}</p>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
