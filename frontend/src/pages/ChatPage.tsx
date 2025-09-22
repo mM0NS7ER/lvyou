@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import '../index.css';
 import './ChatPage.css';
+import Sidebar from '../components/Sidebar';
 
 interface ChatMessage {
   _id: string;
@@ -17,6 +18,7 @@ const ChatPage = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // 获取聊天历史
   useEffect(() => {
@@ -112,14 +114,27 @@ const ChatPage = () => {
   return (
     <div className="chat-page">
       <div className="chat-header">
-        <button className="back-button" onClick={goBack}>
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M19 12H5M12 19l-7-7 7-7"/>
-          </svg>
-          返回
-        </button>
+        <div className="header-left">
+          <button 
+            className="sidebar-toggle-btn" 
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 12h18m-9-9v18"></path>
+            </svg>
+            {isSidebarOpen ? '收起' : '展开'}
+          </button>
+          <button className="back-button" onClick={goBack}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            返回
+          </button>
+        </div>
         <h2>法律咨询</h2>
       </div>
+      
+      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
       <div className="chat-messages">
         {messages.length === 0 ? (

@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import './index.css';
+import Sidebar from './components/Sidebar';
 
 function App() {
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
 
   
@@ -100,13 +102,16 @@ function App() {
       {/* 顶部导航区 */}
       <nav className="nav-container">
         <div className="nav-left">
-          <button className="nav-button">
+          <button 
+            className="nav-button sidebar-toggle-btn" 
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          >
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M3 12h18m-9-9v18"></path>
             </svg>
-            展开
+            {isSidebarOpen ? '收起' : '展开'}
           </button>
-          <button className="nav-button">
+          <button className="nav-button new-chat-btn">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10"></circle>
               <line x1="12" y1="8" x2="12" y2="12"></line>
@@ -117,6 +122,8 @@ function App() {
         </div>
         <button className="login-button">登录</button>
       </nav>
+      
+      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
       {/* 主体内容区 */}
       <main className="main-container">
