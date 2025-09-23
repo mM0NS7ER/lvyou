@@ -18,30 +18,41 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ title, description, icon, onC
 };
 
 const FeatureCards = () => {
+  const features = [
+    {
+      title: '合同风险审查',
+      description: '请帮站在甲方的立场下，审查下这份合同，提炼出核心风险点，并返回修订版word文件。',
+      icon: '📄'
+    },
+    {
+      title: '盖章版律师函',
+      description: '对方公司的微信公众号名称，侵犯我司"律友"的42类商标，请起草一份律师函。',
+      icon: '✉️'
+    },
+    {
+      title: '专业法律报告',
+      description: '请你深入研究，出一份案情分析报告，案情如下:张三开公司的车给客户送货，发生交通事故...',
+      icon: '📊'
+    },
+    {
+      title: '法律咨询',
+      description: '针对您的法律问题，提供专业解答和建议，帮助您了解相关法律规定和应对策略。',
+      icon: '💼'
+    }
+  ];
+
   return (
-    <section className="feature-cards">
-      <h2>核心功能</h2>
-      <div className="cards-container">
+    <div className="feature-cards">
+      {features.map((feature, index) => (
         <FeatureCard
-          title="合同风险审查"
-          description="智能分析合同条款，识别潜在风险点，提供专业修改建议"
-          icon="📄"
-          onClick={() => console.log('合同风险审查')}
+          key={index}
+          title={feature.title}
+          description={feature.description}
+          icon={feature.icon}
+          onClick={() => console.log('点击功能:', feature.title)}
         />
-        <FeatureCard
-          title="全自动催款函"
-          description="基于案件信息自动生成专业催款函，支持邮件发送与追踪"
-          icon="✉️"
-          onClick={() => console.log('全自动催款函')}
-        />
-        <FeatureCard
-          title="专业法律报告"
-          description="根据案情自动生成结构化法律分析报告，支持PDF导出"
-          icon="📊"
-          onClick={() => console.log('专业法律报告')}
-        />
-      </div>
-    </section>
+      ))}
+    </div>
   );
 };
 
