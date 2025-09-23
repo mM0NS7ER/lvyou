@@ -60,8 +60,8 @@ export default function HomePage() {
       <main className="main-container">
         {/* 品牌问候区 */}
         <div className="brand-greeting">
-          <h1>Hi，我是律友 你的AI法律助手</h1>
-          <p>专业、可靠、智能且亲切的法律咨询伙伴</p>
+          <h1 className="brand-title">Hi，我是律友 你的AI法律助手</h1>
+          <p className="brand-subtitle">专业、可靠、智能且亲切的法律咨询伙伴</p>
         </div>
 
         {/* 主体内容布局 */}

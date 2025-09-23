@@ -10,9 +10,11 @@ interface FeatureCardProps {
 const FeatureCard: React.FC<FeatureCardProps> = ({ title, description, icon, onClick }) => {
   return (
     <div className="feature-card" onClick={onClick}>
-      <div className="card-icon">{icon}</div>
-      <h3>{title}</h3>
-      <p>{description}</p>
+      <div className="card-content">
+        <div className="card-icon">{icon}</div>
+        <h3 className="feature-card-title">{title}</h3>
+      </div>
+      <p className="feature-card-description">{description}</p>
     </div>
   );
 };
