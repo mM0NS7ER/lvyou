@@ -72,3 +72,17 @@ def delete_chat_history(session_id: str, user_id: Optional[str] = None):
         删除的消息数量
     """
     return {"deleted_count": chat_service.delete_chat_history(session_id, user_id)}
+
+@router.delete("/api/chat/sessions/{session_id}")
+def delete_session(session_id: str, user_id: Optional[str] = None):
+    """
+    删除指定会话及其所有聊天记录
+
+    Args:
+        session_id: 会话ID
+        user_id: 可选的用户ID
+
+    Returns:
+        删除的消息数量
+    """
+    return {"deleted_count": chat_service.delete_chat_history(session_id, user_id)}

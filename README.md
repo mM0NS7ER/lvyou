@@ -1,14 +1,36 @@
 # Law Agent
 
-Law Agent 是一个法律智能助手系统，提供法律咨询和文档处理功能。
+Law Agent 是一个法律智能助手系统，提供法律咨询和文档处理功能。目前正在开发中
 
 ## 项目结构
 
 ```
 law-agent/
-├── frontend/         # React + Vite + TypeScript 前端项目
-├── backend/          # FastAPI + Uvicorn 后端项目
-└── start.bat         # 项目启动脚本
+├── frontend/                    # React + Vite + TypeScript 前端项目
+│   ├── src/                    # 源代码目录
+│   │   ├── components/         # 可复用UI组件
+│   │   │   ├── Sidebar.tsx     # 侧边栏组件
+│   │   │   ├── Header.tsx      # 页面头部
+│   │   │   ├── InputArea.tsx   # 输入区域
+│   │   │   ├── HistorySidebar.tsx  # 历史记录侧边栏
+│   │   │   └── ...             # 其他组件
+│   │   ├── pages/              # 页面组件
+│   │   │   └── ChatPage.tsx    # 聊天页面
+│   │   ├── App.tsx             # 主应用组件
+│   │   └── router.tsx          # 路由配置
+│   └── 配置文件                # package.json, tsconfig.json, vite.config.ts等
+├── backend/                     # FastAPI + Uvicorn 后端项目
+│   ├── main.py                 # FastAPI应用主入口
+│   ├── database.py             # 数据库配置与连接
+│   ├── models/                 # 数据模型
+│   │   └── chat.py             # 聊天相关数据模型
+│   ├── routers/                # API路由模块
+│   │   ├── chat.py             # 聊天相关API
+│   │   └── health.py           # 健康检查API
+│   └── services/               # 业务逻辑服务
+│       └── chat_service.py     # 聊天服务逻辑
+├── start.bat                   # 项目启动脚本
+└── LICENSE                     # 项目许可证
 ```
 
 ## 快速开始
@@ -49,12 +71,6 @@ law-agent/
    ```bash
    uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
    ```
-
-   **uvicorn命令参数说明：**
-   - `main:app` - 指定main.py中的app实例
-   - `--host 0.0.0.0` - 监听所有网络接口
-   - `--port 8000` - 指定端口号
-   - `--reload` - 开启热重载，代码修改后自动重启服务
 
 #### 前端启动
 
