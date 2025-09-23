@@ -31,7 +31,7 @@ class DatabaseConfig:
                 # 测试连接
                 self.client.admin.command('ping')
                 print("成功连接到MongoDB")
-                
+
                 self.db = self.client[self.db_name]
                 self.chat_collection = self.db["chat_messages"]
                 self._ensure_indexes()
@@ -39,7 +39,7 @@ class DatabaseConfig:
                 print(f"连接MongoDB失败: {str(e)}")
                 raise
         return self.client
-        
+
     @property
     def collection(self):
         """获取聊天集合的属性访问器"""

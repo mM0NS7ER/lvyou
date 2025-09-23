@@ -6,21 +6,32 @@
 
 ```
 backend/
-├── database.py          # 数据库连接和操作
-├── main.py             # FastAPI应用入口
-├── requirements.txt    # 项目依赖
-├── .env.example        # 环境变量示例
-├── README.md          # 本文件
-├── models/            # 数据模型
+├── app/               # 应用程序主目录
 │   ├── __init__.py
-│   └── chat.py        # 聊天相关模型
-├── services/          # 业务逻辑
-│   ├── __init__.py
-│   └── chat_service.py # 聊天服务
-└── routers/           # API路由
-    ├── __init__.py
-    ├── chat.py        # 聊天相关路由
-    └── health.py      # 健康检查路由
+│   ├── api/           # API路由
+│   │   ├── __init__.py
+│   │   ├── chat.py    # 聊天相关路由
+│   │   └── health.py  # 健康检查路由
+│   ├── core/          # 核心配置
+│   │   └── __init__.py
+│   ├── crud/          # 数据访问层
+│   │   ├── __init__.py
+│   │   └── chat_repository.py # 聊天数据访问
+│   ├── db/            # 数据库配置
+│   │   ├── __init__.py
+│   │   ├── database.py # 数据库连接和操作
+│   │   └── db_config.py # 数据库配置
+│   ├── models/        # 数据模型
+│   │   ├── __init__.py
+│   │   └── chat.py    # 聊天相关模型
+│   └── services/      # 业务逻辑
+│       ├── __init__.py
+│       ├── ai_service.py # AI服务
+│       └── chat_service.py # 聊天服务
+├── main.py            # FastAPI应用入口
+├── requirements.txt   # 项目依赖
+├── .env.example       # 环境变量示例
+└── README.md         # 本文件
 ```
 
 ## 安装依赖

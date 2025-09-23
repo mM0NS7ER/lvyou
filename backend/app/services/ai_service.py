@@ -24,7 +24,7 @@ class AIService:
         self.ai_model = env_config.get("AI_MODEL", "gpt-3.5-turbo")
         self.api_key = env_config.get("AI_API_KEY")
         self.system_prompt = env_config.get("SYSTEM_PROMPT", "你是一个专业的法律助手")
-        
+
         # 这里可以初始化AI模型，如OpenAI、Claude等
         if self.api_key:
             print(f"AI模型 {self.ai_model} 已初始化")
@@ -54,7 +54,7 @@ class AIService:
                     {"role":"user","content": message},
                 ]
             )
-            
+
             # 模拟AI响应
             return response.choices[0].message.content
         else:

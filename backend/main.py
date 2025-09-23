@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import chat, health
-from config.db_config import db_config
+from app.api import chat, health
+from app.db.db_config import db_config
 from dotenv import dotenv_values
 
 # 直接从.env文件读取配置

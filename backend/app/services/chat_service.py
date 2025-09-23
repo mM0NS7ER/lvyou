@@ -8,16 +8,16 @@ import uuid
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 from dotenv import dotenv_values
-from repositories.chat_repository import ChatRepository
-from services.ai_service import AIService
-from models.chat import ChatRequest, ChatResponse
+from app.crud.chat_repository import ChatRepository
+from app.services.ai_service import AIService
+from app.models.chat import ChatRequest, ChatResponse
 
 # 直接从.env文件读取配置
 env_config = dotenv_values()
 
 class ChatService:
     """聊天服务类"""
-    
+
     def __init__(self):
         """初始化聊天服务"""
         self.chat_repository = ChatRepository()

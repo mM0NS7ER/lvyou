@@ -1,8 +1,8 @@
 
 from fastapi import APIRouter, HTTPException, Depends, Query
 from typing import Optional
-from services.chat_service import ChatService
-from models.chat import ChatRequest, ChatResponse, HealthResponse
+from app.services.chat_service import ChatService
+from app.models.chat import ChatRequest, ChatResponse, HealthResponse
 
 router = APIRouter()
 chat_service = ChatService()
@@ -25,8 +25,8 @@ async def chat(request: ChatRequest):
 
 @router.get("/api/chat/history")
 def get_chat_history(
-    session_id: str, 
-    user_id: Optional[str] = None, 
+    session_id: str,
+    user_id: Optional[str] = None,
     limit: int = Query(50, ge=1, le=100)
 ):
     """
@@ -44,7 +44,7 @@ def get_chat_history(
 
 @router.get("/api/chat/sessions")
 def get_user_sessions_endpoint(
-    user_id: str, 
+    user_id: str,
     limit: int = Query(20, ge=1, le=100)
 ):
     """

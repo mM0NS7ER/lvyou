@@ -6,7 +6,7 @@
 
 from datetime import datetime
 from typing import Optional, List, Dict, Any
-from config.db_config import db_config
+from app.db.db_config import db_config
 
 class ChatRepository:
     """聊天数据访问类"""
@@ -111,7 +111,7 @@ class ChatRepository:
             cursor = self.chat_collection.find({"user_id": user_id}, {"session_id": 1})
             for message in cursor:
                 session_ids.add(message["session_id"])
-            
+
             # 为每个会话获取最后一条消息
             sessions = []
             for session_id in session_ids:
@@ -119,7 +119,7 @@ class ChatRepository:
                     "session_id": session_id,
                     "user_id": user_id
                 }).sort("timestamp", -1).limit(1)
-                
+
                 for msg in last_message_cursor:
                     sessions.append({
                         "session_id": session_id,
@@ -127,7 +127,7 @@ class ChatRepository:
                         "timestamp": msg["timestamp"]
                     })
                     break
-            
+
             # 按时间排序并限制数量
             sessions = sorted(sessions, key=lambda x: x["timestamp"], reverse=True)[:limit]
             print(f"成功获取用户会话: {len(sessions)}条")

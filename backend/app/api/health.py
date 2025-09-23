@@ -1,6 +1,6 @@
 
 from fastapi import APIRouter
-from models.chat import HealthResponse
+from app.models.chat import HealthResponse
 
 router = APIRouter()
 
