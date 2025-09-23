@@ -7,9 +7,13 @@
 import uuid
 from datetime import datetime
 from typing import Optional, List, Dict, Any
+from dotenv import dotenv_values
 from repositories.chat_repository import ChatRepository
 from services.ai_service import AIService
 from models.chat import ChatRequest, ChatResponse
+
+# 直接从.env文件读取配置
+env_config = dotenv_values()
 
 class ChatService:
     """聊天服务类"""
@@ -33,7 +37,7 @@ class ChatService:
         session_id = request.session_id or str(uuid.uuid4())
 
         # 确保使用正确的user_id，而不是默认的"anonymous"
-        user_id = request.user_id or "user_ah72m2ejx"
+        user_id = request.user_id or env_config.get("DEFAULT_USER_ID", "user_ah72m2ejx")
 
         # 存储用户消息
         user_message_id = self.chat_repository.add_chat_message(

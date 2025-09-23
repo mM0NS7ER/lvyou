@@ -7,14 +7,18 @@
 import os
 from pymongo import MongoClient
 from pymongo.server_api import ServerApi
+from dotenv import dotenv_values
+
+# 直接从.env文件读取配置
+env_config = dotenv_values()
 
 class DatabaseConfig:
     """数据库配置类"""
 
     def __init__(self):
         # MongoDB连接配置
-        self.mongodb_uri = os.getenv("MONGODB_URI", "mongodb://localhost:27017/")
-        self.db_name = "law_agent"
+        self.mongodb_uri = env_config.get("MONGODB_URI", "mongodb://localhost:27017/")
+        self.db_name = env_config.get("DB_NAME", "law_agent")
         self.client = None
         self.db = None
         self.chat_collection = None
