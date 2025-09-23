@@ -1,7 +1,7 @@
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routers import chat, health
+from config.db_config import db_config
 
 # 创建FastAPI应用
 app = FastAPI(
@@ -23,35 +23,19 @@ app.add_middleware(
 app.include_router(health.router)
 app.include_router(chat.router)
 
-# 定义数据模型
-class ChatRequest(BaseModel):
-    message: str
+@app.on_event("startup")
+async def startup_event():
+    """应用启动时执行的操作"""
+    # 连接数据库
+    db_config.connect()
+    print("数据库连接已建立")
 
-class ChatResponse(BaseModel):
-    response: str
-
-class HealthResponse(BaseModel):
-    status: str
-    message: str
-
-@app.get("/")
-def read_root():
-    return {"message": "Welcome to Law Agent API"}
-
-@app.get("/health", response_model=HealthResponse)
-def health_check():
-    return HealthResponse(status="OK", message="API is running")
-
-@app.post("/api/chat", response_model=ChatResponse)
-def chat(request: ChatRequest):
-    # 这里是简单的模拟回复，实际应用中应该调用AI模型
-    if not request.message:
-        raise HTTPException(status_code=400, detail="Message cannot be empty")
-
-    # 模拟AI回复
-    ai_response = f"您的问题: {request.message}\n\n这是AI助手对您法律问题的回答。在实际应用中，这里应该是AI模型生成的专业法律建议。"
-
-    return ChatResponse(response=ai_response)
+@app.on_event("shutdown")
+async def shutdown_event():
+    """应用关闭时执行的操作"""
+    # 断开数据库连接
+    db_config.disconnect()
+    print("数据库连接已关闭")
 
 if __name__ == "__main__":
     import uvicorn

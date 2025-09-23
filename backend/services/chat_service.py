@@ -1,13 +1,23 @@
 
+"""
+聊天服务模块
+负责处理聊天相关的业务逻辑
+"""
+
 import uuid
 from datetime import datetime
 from typing import Optional, List, Dict, Any
-from database import add_chat_message, get_chat_messages, get_user_sessions, delete_chat_messages
+from repositories.chat_repository import ChatRepository
+from services.ai_service import AIService
 from models.chat import ChatRequest, ChatResponse
 
 class ChatService:
+    """聊天服务类"""
+    
     def __init__(self):
-        pass
+        """初始化聊天服务"""
+        self.chat_repository = ChatRepository()
+        self.ai_service = AIService()
 
     async def process_message(self, request: ChatRequest) -> ChatResponse:
         """
@@ -26,7 +36,7 @@ class ChatService:
         user_id = request.user_id or "user_ah72m2ejx"
 
         # 存储用户消息
-        user_message_id = add_chat_message(
+        user_message_id = self.chat_repository.add_chat_message(
             session_id=session_id,
             user_id=user_id,
             role="user",
@@ -35,11 +45,11 @@ class ChatService:
             additional_data={"timestamp": datetime.utcnow()}
         )["id"]
 
-        # 模拟AI回复 - 实际应用中应该调用AI模型
-        ai_response = f"您的问题: {request.message}\n\n这是AI助手对您法律问题的回答。在实际应用中，这里应该是AI模型生成的专业法律建议。"
+        # 生成AI回复
+        ai_response = await self.ai_service.generate_response(request.message)
 
         # 存储AI回复
-        ai_message_id = add_chat_message(
+        ai_message_id = self.chat_repository.add_chat_message(
             session_id=session_id,
             user_id=user_id,
             role="assistant",
@@ -66,7 +76,7 @@ class ChatService:
         Returns:
             聊天历史记录列表
         """
-        return get_chat_messages(session_id, user_id, limit)
+        return self.chat_repository.get_chat_messages(session_id, user_id, limit)
 
     def get_user_sessions(self, user_id: str, limit: int = 20) -> List[Dict[str, Any]]:
         """
@@ -79,7 +89,7 @@ class ChatService:
         Returns:
             用户会话列表
         """
-        return get_user_sessions(user_id, limit)
+        return self.chat_repository.get_user_sessions(user_id, limit)
 
     def delete_chat_history(self, session_id: str, user_id: Optional[str] = None) -> int:
         """
@@ -92,4 +102,4 @@ class ChatService:
         Returns:
             删除的消息数量
         """
-        return delete_chat_messages(session_id, user_id)
+        return self.chat_repository.delete_chat_messages(session_id, user_id)
