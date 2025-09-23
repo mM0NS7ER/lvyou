@@ -27,10 +27,6 @@
   - [方法一：使用启动脚本（推荐）](#方法一使用启动脚本推荐)
   - [方法二：手动启动](#方法二手动启动)
 - [访问地址](#访问地址)
-- [开发指南](#开发指南)
-  - [前端开发](#前端开发)
-  - [后端开发](#后端开发)
-- [贡献指南](#贡献指南)
 - [许可证](#许可证)
 
 ## 项目简介
@@ -137,13 +133,12 @@ law-agent/
 ### 环境要求
 - Python 3.8+
 - pip (Python包管理器)
-- Node.js 16+
 - npm (Node包管理器)
 - 现代浏览器 (Chrome, Firefox, Edge等)
 
 ### 方法一：使用启动脚本（推荐）
 
-1. 确保已安装 Python 3.8+ 和 Node.js 16+
+1. 确保已安装 Python 3.8+
 2. 双击运行 `start.bat` 文件
 3. 等待依赖安装完成，服务自动启动
 
@@ -203,60 +198,6 @@ law-agent/
 | 后端API | http://localhost:8000 | API服务 |
 | API文档 | http://localhost:8000/docs | Swagger API文档 |
 | 健康检查 | http://localhost:8000/health | 服务健康状态 |
-
-## 开发指南
-
-### 前端开发
-
-#### 目录结构
-
-- `src/components/` - 可复用UI组件
-- `src/pages/` - 页面组件
-- `src/hooks/` - 自定义Hook
-- `src/services/` - API服务层
-
-#### 开发流程
-
-1. 创建新组件或页面
-2. 编写组件逻辑和样式
-3. 使用自定义Hook处理业务逻辑
-4. 通过API服务层与后端通信
-5. 测试功能并提交代码
-
-### 后端开发
-
-#### 目录结构
-
-- `main.py` - FastAPI应用主入口
-- `models/` - 数据模型
-- `routers/` - API路由模块
-- `services/` - 业务逻辑服务
-
-#### 开发流程
-
-1. 定义数据模型
-2. 实现业务逻辑
-3. 创建API路由
-4. 编写API文档
-5. 测试API并提交代码
-
-## 贡献指南
-
-我们欢迎任何形式的贡献，包括但不限于：
-
-- 提交bug报告
-- 提出新功能建议
-- 改进文档
-- 提交代码修复
-- 开发新功能
-
-### 提交代码
-
-1. Fork项目
-2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 创建Pull Request
 
 ## 许可证
 
