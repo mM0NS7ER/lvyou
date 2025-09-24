@@ -3,11 +3,16 @@ import React, { useState, KeyboardEvent } from 'react';
 interface InputAreaProps {
   onSendMessage: (message: string) => void;
   isLoading?: boolean;
+  value?: string;
+  onChange?: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
 }
 
-const InputArea: React.FC<InputAreaProps> = ({ onSendMessage, isLoading = false }) => {
-  const [message, setMessage] = useState('');
-
+const InputArea: React.FC<InputAreaProps> = ({ onSendMessage, isLoading = false, value, onChange }) => {
+  const [internalMessage, setInternalMessage] = useState('');
+  
+  // 使用传入的value或内部状态
+  const message = value !== undefined ? value : internalMessage;
+  
   const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -18,7 +23,17 @@ const InputArea: React.FC<InputAreaProps> = ({ onSendMessage, isLoading = false 
   const handleSendMessage = () => {
     if (message.trim()) {
       onSendMessage(message);
-      setMessage('');
+      if (value === undefined) {
+        setInternalMessage('');
+      }
+    }
+  };
+  
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    if (onChange) {
+      onChange(e);
+    } else {
+      setInternalMessage(e.target.value);
     }
   };
 
@@ -27,7 +42,7 @@ const InputArea: React.FC<InputAreaProps> = ({ onSendMessage, isLoading = false 
       <div className="input-container">
         <textarea
           value={message}
-          onChange={(e) => setMessage(e.target.value)}
+          onChange={handleChange}
           onKeyDown={handleKeyDown}
           placeholder="输入法律问题，剩下的交给律友"
           rows={3}

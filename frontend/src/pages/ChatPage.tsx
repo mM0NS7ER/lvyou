@@ -3,7 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import '../index.css';
 import './ChatPage.css';
 import Sidebar from '../components/Sidebar';
+import InputArea from '../components/InputArea';
 import { ErrorBoundary } from '../components/ErrorBoundary';
+import { sendMessageToAPI } from '../services/apiService';
 
 interface ChatMessage {
   _id: string;
@@ -63,28 +65,12 @@ const ChatPage = () => {
       };
       setMessages(prev => [...prev, userMessage]);
 
-      // 发送消息到后端
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: originalMessage,
-          session_id: sessionId,
-          user_id: userId,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
+      // 使用apiService发送消息到后端
+      const data = await sendMessageToAPI(originalMessage, sessionId, userId);
 
       // 添加AI回复到本地状态
       const aiMessage: ChatMessage = {
-        _id: data.message_id,
+        _id: data.message_id || data.session_id,
         role: 'assistant',
         content: data.response,
         timestamp: new Date().toISOString(),
@@ -95,7 +81,7 @@ const ChatPage = () => {
       setMessage('');
     } catch (error) {
       console.error('发送消息失败:', error);
-      alert(`发送消息失败: ${error.message}`);
+      alert(`发送消息失败: ${error instanceof Error ? error.message : String(error)}`);
       // 移除临时添加的用户消息
       setMessages(prev => prev.filter(msg => msg._id !== `temp_${Date.now()}`));
     } finally {
@@ -103,12 +89,7 @@ const ChatPage = () => {
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
+
 
   const goBack = () => {
     navigate('/');
@@ -116,6 +97,30 @@ const ChatPage = () => {
 
   const formatTime = (timestamp: string) => {
     return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  // 初始化欢迎消息
+  useEffect(() => {
+    if (messages.length === 0 && sessionId) {
+      const welcomeMessage: ChatMessage = {
+        _id: `welcome_${Date.now()}`,
+        role: 'assistant',
+        content: '你好！有什么需要帮助的吗？',
+        timestamp: new Date().toISOString(),
+      };
+      setMessages([welcomeMessage]);
+    }
+  }, [messages.length, sessionId]);
+
+  // 复制消息内容
+  const copyMessageContent = (content: string) => {
+    navigator.clipboard.writeText(content)
+      .then(() => {
+        alert('内容已复制到剪贴板');
+      })
+      .catch(err => {
+        console.error('复制失败:', err);
+      });
   };
 
   return (
@@ -144,50 +149,56 @@ const ChatPage = () => {
 
         <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
-        <div className="chat-messages">
-          {messages.length === 0 ? (
-            <div className="empty-chat">
-              <p>暂无聊天记录</p>
-            </div>
-          ) : (
-            messages.map((msg) => (
-              <div key={msg._id} className={`message ${msg.role}`}>
-                <div className="message-content">
-                  <p>{msg.content}</p>
-                </div>
-                <div className="message-time">
-                  {formatTime(msg.timestamp)}
-                </div>
+        <div className="chat-messages-outer">
+          <div className="chat-messages">
+            {messages.length === 0 ? (
+              <div className="empty-chat">
+                <p>暂无聊天记录</p>
               </div>
-            ))
-          )}
+            ) : (
+              messages.map((msg) => (
+                <div key={msg._id} className={`message ${msg.role}`}>
+                  <div className="message-content">
+                    <p>{msg.content}</p>
+                  </div>
+                  {msg.role === 'assistant' && (
+                    <div className="message-actions">
+                      <button onClick={() => copyMessageContent(msg.content)}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                        复制
+                      </button>
+                      <div className="encryption-badge">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </svg>
+                        已加密
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
         </div>
 
-        <div className="chat-input">
-          <textarea
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="输入法律问题，剩下的交给律友"
-            rows={3}
-            disabled={isLoading}
-          />
-          <button
-            className="send-button"
-            onClick={handleSendMessage}
-            disabled={isLoading || !message.trim()}
-          >
-            {isLoading ? (
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="spinner">
-                <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
-              </svg>
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="22" y1="2" x2="11" y2="13"></line>
-                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-              </svg>
-            )}
-          </button>
+        <InputArea
+          onSendMessage={handleSendMessage}
+          isLoading={isLoading}
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+        />
+
+        <div className="chat-footer">
+          <span><a href="/terms" target="_blank" rel="noopener noreferrer">用户协议</a></span>
+          <span>I</span>
+          <span><a href="/privacy" target="_blank" rel="noopener noreferrer">隐私政策</a></span>
+          <span>I</span>
+          <span style={{marginLeft: '3px'}}>由律友提供技术支持</span>
+          <span style={{marginLeft: '3px'}}>声明：内容为AI生成，不代表开发者观点</span>
         </div>
       </div>
     </ErrorBoundary>
