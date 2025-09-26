@@ -3,28 +3,38 @@ import { useNavigate } from 'react-router-dom';
 import FeatureCards from '../components/FeatureCards';
 import InputArea from '../components/InputArea';
 import Sidebar from '../components/Sidebar';
-import { useSendMessage } from '../hooks/useSendMessage';
+import { getUserId } from '../services/apiService';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 
 export default function HomePage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   
-  const { sendMessage, isLoading } = useSendMessage({
-    onSuccess: (data) => {
-      // 跳转到聊天页面
-      setTimeout(() => {
-        navigate(`/chat/${data.session_id}`);
-      }, 200); // 0.2秒后跳转
-    },
-    onError: (error) => {
-      alert(`无法连接到后端服务器: ${error.message}`);
-    }
-  });
+  // 不再使用useSendMessage，直接创建新会话并跳转到Chatpage
 
-  const handleSendMessage = (message: string) => {
-    if (message.trim()) {
-      sendMessage(message);
+  const handleSendMessage = async (message: string) => {
+    if (!message.trim()) return;
+    
+    setIsLoading(true);
+    
+    try {
+      // 生成新的会话ID
+      const sessionId = `session_${Date.now()}`;
+      const userId = getUserId();
+      
+      // 直接跳转到聊天页面，并将消息和会话ID作为状态传递
+      // 我们将在Chatpage中处理实际的发送逻辑
+      navigate(`/chat/${sessionId}`, {
+        state: {
+          initialMessage: message,
+          userId
+        }
+      });
+    } catch (error) {
+      alert(`创建会话失败: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setIsLoading(false);
     }
   };
 
