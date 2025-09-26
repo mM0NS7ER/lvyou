@@ -138,7 +138,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, refreshKey = 0 }) =>
       }
     } catch (error) {
       console.error('删除聊天记录失败:', error);
-      alert(`删除聊天记录失败: ${error.message}`);
+      const errorMessage = typeof error === 'object' && error !== null && 'message' in error
+        ? (error as { message: string }).message
+        : String(error);
+      alert(`删除聊天记录失败: ${errorMessage}`);
     } finally {
       setShowDeleteDialog(false);
       setSessionToDelete(null);

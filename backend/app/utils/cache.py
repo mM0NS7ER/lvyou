@@ -10,9 +10,9 @@ from typing import Optional, Dict, Any, List
 
 # 创建缓存实例
 # 历史记录缓存：最大1000条记录，每条记录缓存5分钟
-history_cache = TTLCache(maxsize=1000, ttl=300)
+history_cache = TTLCache(maxsize=1000, ttl=5)
 # 用户会话缓存：最大500条记录，每条记录缓存5分钟
-sessions_cache = TTLCache(maxsize=500, ttl=300)
+sessions_cache = TTLCache(maxsize=500, ttl=5)
 
 def clear_history_cache(session_id: str, user_id: Optional[str] = None):
     """
