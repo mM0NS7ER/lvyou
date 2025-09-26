@@ -57,6 +57,13 @@ export const sendMessageToAPI = async (message: string, sessionId?: string, user
       localStorage.setItem('sessionId', data.session_id);
     }
 
+    // 清除相关缓存
+    const userId = localStorage.getItem('userId');
+    if (userId && data.session_id) {
+      clearHistoryCache(data.session_id, userId);
+      clearSessionsCache(userId);
+    }
+
     return data;
   } catch (error) {
     console.error('[ERROR] 连接后端失败:', error);
@@ -221,6 +228,13 @@ export const sendMessageStream = async (message: string, sessionId?: string, use
         } finally {
           reader.releaseLock();
           console.log(`[DEBUG] 流式响应处理完成，共处理 ${chunkCount} 个数据块，${lineCount} 行数据`);
+          
+          // 清除相关缓存
+          const userId = localStorage.getItem('userId');
+          if (userId && newSessionId) {
+            clearHistoryCache(newSessionId, userId);
+            clearSessionsCache(userId);
+          }
         }
       }
     };
@@ -261,3 +275,106 @@ export interface StreamChunk {
   session_id?: string;
   full_content?: string; // 当前完整的累积内容
 }
+
+// 导入缓存服务
+import { cacheService } from './cacheService';
+
+/**
+ * 获取聊天历史记录(带缓存)
+ * @param session_id 会话ID
+ * @param user_id 用户ID
+ * @param limit 返回记录数量限制
+ * @returns Promise，解析为聊天历史记录
+ */
+export const getChatHistory = async (session_id: string, user_id?: string, limit: number = 50) => {
+  // 生成缓存键
+  const cacheKey = `history:${session_id}:${user_id || 'all'}:${limit}`;
+
+  // 尝试从缓存获取
+  const cachedData = cacheService.get<{ messages: any[] }>(cacheKey);
+  if (cachedData) {
+    console.log('[DEBUG] 从缓存获取历史记录');
+    return cachedData;
+  }
+
+  // 缓存未命中，从API获取
+  console.log('[DEBUG] 从API获取历史记录');
+  try {
+    const apiUrl = `/api/chat/history?session_id=${encodeURIComponent(session_id)}${user_id ? `&user_id=${encodeURIComponent(user_id)}` : ''}&limit=${limit}`;
+    const response = await fetch(apiUrl);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    // 存入缓存，设置30分钟过期
+    cacheService.set(cacheKey, data, 30);
+
+    return data;
+  } catch (error) {
+    console.error('[ERROR] 获取历史记录失败:', error);
+    throw new Error(`获取历史记录失败: ${error instanceof Error ? error.message : String(error)}`);
+  }
+};
+
+/**
+ * 获取用户会话列表(带缓存)
+ * @param user_id 用户ID
+ * @param limit 返回会话数量限制
+ * @returns Promise，解析为用户会话列表
+ */
+export const getUserSessions = async (user_id: string, limit: number = 20) => {
+  // 生成缓存键
+  const cacheKey = `sessions:${user_id}:${limit}`;
+
+  // 尝试从缓存获取
+  const cachedData = cacheService.get<{ sessions: any[] }>(cacheKey);
+  if (cachedData) {
+    console.log('[DEBUG] 从缓存获取用户会话');
+    return cachedData;
+  }
+
+  // 缓存未命中，从API获取
+  console.log('[DEBUG] 从API获取用户会话');
+  try {
+    const apiUrl = `/api/chat/sessions?user_id=${encodeURIComponent(user_id)}&limit=${limit}`;
+    const response = await fetch(apiUrl);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    // 存入缓存，设置30分钟过期
+    cacheService.set(cacheKey, data, 30);
+
+    return data;
+  } catch (error) {
+    console.error('[ERROR] 获取用户会话失败:', error);
+    throw new Error(`获取用户会话失败: ${error instanceof Error ? error.message : String(error)}`);
+  }
+};
+
+/**
+ * 清除指定会话的历史记录缓存
+ * @param session_id 会话ID
+ * @param user_id 用户ID
+ */
+export const clearHistoryCache = (session_id: string, user_id?: string) => {
+  // 生成缓存键
+  const cacheKey = `history:${session_id}:${user_id || 'all'}:${50}`; // 使用默认limit值
+  cacheService.remove(cacheKey);
+};
+
+/**
+ * 清除用户会话缓存
+ * @param user_id 用户ID
+ */
+export const clearSessionsCache = (user_id: string) => {
+  // 生成缓存键
+  const cacheKey = `sessions:${user_id}:20`; // 使用默认limit值
+  cacheService.remove(cacheKey);
+};
