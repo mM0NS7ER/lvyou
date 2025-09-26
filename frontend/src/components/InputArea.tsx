@@ -5,9 +5,11 @@ interface InputAreaProps {
   isLoading?: boolean;
   value?: string;
   onChange?: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  onClearMessage?: () => void;
+  disabled?: boolean;
 }
 
-const InputArea: React.FC<InputAreaProps> = ({ onSendMessage, isLoading = false, value, onChange }) => {
+const InputArea: React.FC<InputAreaProps> = ({ onSendMessage, isLoading = false, value, onChange, onClearMessage, disabled = false }) => {
   const [internalMessage, setInternalMessage] = useState('');
   
   // 使用传入的value或内部状态
@@ -23,8 +25,11 @@ const InputArea: React.FC<InputAreaProps> = ({ onSendMessage, isLoading = false,
   const handleSendMessage = () => {
     if (message.trim()) {
       onSendMessage(message);
+      // 立即清空输入框
       if (value === undefined) {
         setInternalMessage('');
+      } else if (onClearMessage) {
+        onClearMessage();
       }
     }
   };
@@ -46,6 +51,7 @@ const InputArea: React.FC<InputAreaProps> = ({ onSendMessage, isLoading = false,
           onKeyDown={handleKeyDown}
           placeholder="输入法律问题，剩下的交给律友"
           rows={3}
+          disabled={disabled || isLoading}
         />
         <div className="input-buttons">
           <button className="upload-button">
@@ -58,7 +64,7 @@ const InputArea: React.FC<InputAreaProps> = ({ onSendMessage, isLoading = false,
           <button 
             className="send-button" 
             onClick={handleSendMessage} 
-            disabled={isLoading || !message.trim()}
+            disabled={disabled || isLoading || !message.trim()}
           >
             {isLoading ? (
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="spinner">

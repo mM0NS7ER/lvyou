@@ -190,7 +190,6 @@ const ChatPage = () => {
               setIsLoading(false);
               setStreamingMessageId(null);
               streamingMessageRef.current = null; // 清除ref
-              setMessage(''); // 清空输入框
               console.log('[DEBUG] 流式状态更新完成');
               break;
             } else if (chunk.type === 'error') {
@@ -242,8 +241,8 @@ const ChatPage = () => {
         }
       };
 
-      // 设置消息到输入框
-      setMessage(initialMessage);
+      // 清空输入框
+      setMessage('');
       
       // 直接调用发送函数
       sendInitialMessage();
@@ -292,6 +291,10 @@ const ChatPage = () => {
     console.log('[DEBUG] 开始发送消息:', message.substring(0, 50) + '...');
     setIsLoading(true);
     const originalMessage = message;
+    
+    // 立即清空输入框
+    setMessage('');
+    
     const messageStartTime = Date.now();
 
     try {
@@ -413,7 +416,6 @@ const ChatPage = () => {
           setIsLoading(false);
           setStreamingMessageId(null);
           streamingMessageRef.current = null; // 清除ref
-          setMessage(''); // 清空输入框
           console.log('[DEBUG] 流式状态更新完成');
           break;
         } else if (chunk.type === 'error') {
@@ -595,6 +597,8 @@ const ChatPage = () => {
           isLoading={isLoading}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
+          disabled={isLoading}
+          onClearMessage={() => setMessage('')}
         />
 
         <div className="chat-footer">
