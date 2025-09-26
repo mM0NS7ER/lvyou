@@ -84,3 +84,4 @@ config.local.json
 # 项目文档
 工作计划.md
 PRD.md
+缓存机制实施方案.md

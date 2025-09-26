@@ -13,6 +13,8 @@ import time
 from app.crud.chat_repository import ChatRepository
 from app.services.ai_service import AIService
 from app.models.chat import ChatRequest, ChatResponse
+from app.utils.cache import history_cache, sessions_cache, clear_history_cache, clear_sessions_cache
+from cachetools import cached
 
 # 直接从.env文件读取配置
 env_config = dotenv_values()
@@ -72,6 +74,10 @@ class ChatService:
             additional_data={"timestamp": datetime.utcnow()}
         )["id"]
         print(f"[DEBUG] AI回复已保存，ID: {ai_message_id}")
+
+        # 清除相关缓存
+        clear_history_cache(session_id, user_id)
+        clear_sessions_cache(user_id)
 
         return ChatResponse(
             response=ai_response,
@@ -137,6 +143,10 @@ class ChatService:
             )["id"]
             print(f"[DEBUG] 完整AI回复已保存，ID: {ai_message_id}")
 
+            # 清除相关缓存
+            clear_history_cache(session_id, user_id)
+            clear_sessions_cache(user_id)
+
         except Exception as e:
             print(f"[ERROR] 处理流式消息时出错: {str(e)}")
             print(f"[ERROR] 错误类型: {type(e).__name__}")
@@ -144,9 +154,10 @@ class ChatService:
             print(f"[ERROR] 错误堆栈: {traceback.format_exc()}")
             raise
 
+    @cached(history_cache, key=lambda self, session_id, user_id, limit: f"history:{session_id}:{user_id or 'all'}:{limit}")
     def get_chat_history(self, session_id: str, user_id: Optional[str] = None, limit: int = 50) -> List[Dict[str, Any]]:
         """
-        获取指定会话的聊天历史记录
+        获取指定会话的聊天历史记录(带缓存)
 
         Args:
             session_id: 会话ID
@@ -156,11 +167,13 @@ class ChatService:
         Returns:
             聊天历史记录列表
         """
+        print(f"[DEBUG] 从数据库获取历史记录: session_id={session_id}, user_id={user_id}, limit={limit}")
         return self.chat_repository.get_chat_messages(session_id, user_id, limit)
 
+    @cached(sessions_cache, key=lambda self, user_id, limit: f"sessions:{user_id}:{limit}")
     def get_user_sessions(self, user_id: str, limit: int = 20) -> List[Dict[str, Any]]:
         """
-        获取用户的所有会话
+        获取用户的所有会话(带缓存)
 
         Args:
             user_id: 用户ID
@@ -169,6 +182,7 @@ class ChatService:
         Returns:
             用户会话列表
         """
+        print(f"[DEBUG] 从数据库获取用户会话: user_id={user_id}, limit={limit}")
         return self.chat_repository.get_user_sessions(user_id, limit)
 
     def delete_chat_history(self, session_id: str, user_id: Optional[str] = None) -> int:
@@ -182,4 +196,13 @@ class ChatService:
         Returns:
             删除的消息数量
         """
-        return self.chat_repository.delete_chat_messages(session_id, user_id)
+        # 先删除数据
+        deleted_count = self.chat_repository.delete_chat_messages(session_id, user_id)
+
+        # 清除相关缓存
+        clear_history_cache(session_id, user_id)
+        if user_id:
+            clear_sessions_cache(user_id)
+
+        print(f"[DEBUG] 已删除 {deleted_count} 条消息并清除缓存")
+        return deleted_count

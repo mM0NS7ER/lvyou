@@ -4,7 +4,7 @@ from app.models.chat import HealthResponse
 
 router = APIRouter()
 
-@router.get("/health", response_model=HealthResponse)
+@router.get("/api/health", response_model=HealthResponse)
 def health_check():
     """
     健康检查端点

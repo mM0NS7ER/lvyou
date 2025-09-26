@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import chat, health
+from app.api import chat, health, cache
 from app.db.db_config import db_config
 from dotenv import dotenv_values
 
@@ -26,6 +26,7 @@ app.add_middleware(
 # 包含路由
 app.include_router(health.router)
 app.include_router(chat.router)
+app.include_router(cache.router)
 
 @app.on_event("startup")
 async def startup_event():
