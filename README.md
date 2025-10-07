@@ -124,6 +124,27 @@ law-agent/
 - pip (Python包管理器)
 - npm (Node包管理器)
 - 现代浏览器 (Chrome, Firefox, Edge等)
+- MongoDB 数据库 (用于存储聊天记录)
+
+### 环境配置
+1. **后端环境配置**
+   - 进入后端目录：`cd backend`
+   - 复制环境变量模板文件：`cp .env.example .env`
+   - 编辑 `.env` 文件，填入您的实际配置：
+     - `ZHIPU_API_KEY` 或 `AI_API_KEY`：智谱AI API密钥（必需）
+     - `MONGODB_URI`：MongoDB连接字符串（默认为本地MongoDB）
+     - 其他配置可根据需要修改
+
+   获取智谱AI API密钥：
+   1. 访问 [智谱AI开放平台](https://open.bigmodel.cn/)
+   2. 注册并登录账号
+   3. 在控制台创建API密钥
+   4. 将获取的API密钥填入 `.env` 文件
+
+2. **前端环境配置**
+   - 进入前端目录：`cd frontend`
+   - 安装依赖：`npm install`
+   - 前端通常无需额外配置，会自动使用后端API
 
 ### 方法一：使用启动脚本（推荐）
 

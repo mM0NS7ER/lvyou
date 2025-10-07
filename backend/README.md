@@ -47,11 +47,39 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-2. 编辑`.env`文件，配置MongoDB连接信息：
+2. 编辑`.env`文件，配置以下内容：
+
+### 数据库配置
 ```
 MONGODB_URI=mongodb://localhost:27017/
 DB_NAME=law_agent
 ```
+
+### AI服务配置（必需）
+```
+# 智谱AI API密钥（二选一）
+ZHIPU_API_KEY=your_zhipuai_api_key_here
+# 或者使用通用API密钥变量
+AI_API_KEY=your_api_key_here
+
+# AI模型配置
+AI_MODEL=glm-4
+SYSTEM_PROMPT=你是一个专业的法律助手，请提供准确、可靠的法律建议。
+```
+
+### 服务器配置
+```
+HOST=0.0.0.0
+PORT=8000
+ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+DEFAULT_USER_ID=user_default_12345
+```
+
+### 获取智谱AI API密钥
+1. 访问 [智谱AI开放平台](https://open.bigmodel.cn/)
+2. 注册并登录账号
+3. 在控制台创建API密钥
+4. 将获取的API密钥填入 `.env` 文件
 
 ## 运行应用
 

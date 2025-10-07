@@ -13,8 +13,19 @@ env_config = dotenv_values()
 
 from zhipuai import ZhipuAI
 import os
-zhipuai_api_key = os.getenv('ZHIPU_API_KEY')
-client = ZhipuAI(api_key=zhipuai_api_key)
+
+# 获取API密钥，优先从环境变量获取，然后从.env文件获取
+zhipuai_api_key = os.getenv('ZHIPU_API_KEY') or os.getenv('AI_API_KEY')
+
+# 初始化客户端，只有在有API密钥时才初始化
+client = None
+if zhipuai_api_key:
+    try:
+        client = ZhipuAI(api_key=zhipuai_api_key)
+        print("[DEBUG] 智谱AI客户端初始化成功")
+    except Exception as e:
+        print(f"[ERROR] 智谱AI客户端初始化失败: {str(e)}")
+        client = None
 
 class AIService:
     """AI服务类"""
