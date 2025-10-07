@@ -1,10 +1,10 @@
-import HomePage from './pages/HomePage';
+import HomePageWithFileUpload from './pages/HomePageWithFileUpload';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
 function App() {
   return (
     <ErrorBoundary>
-      <HomePage />
+      <HomePageWithFileUpload />
     </ErrorBoundary>
   );
 }
