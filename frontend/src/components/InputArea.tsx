@@ -157,9 +157,18 @@ const InputArea: React.FC<InputAreaProps> = ({
 const handleKeyDown = useCallback((e: KeyboardEvent) => {
   if (e.key === 'Enter' && !e.shiftKey) {
     e.preventDefault();
+    // 先清空输入框和文件
+    if (value === undefined) {
+      setInternalMessage('');
+    } else if (onClearMessage) {
+      onClearMessage();
+    }
+    setUploadedFiles([]);
+    
+    // 然后发送消息
     onSendMessage(message, uploadedFiles);
   }
-}, [message, uploadedFiles, onSendMessage]);
+}, [message, uploadedFiles, onSendMessage, value, onClearMessage]);
 
 
   // 处理文本变化
@@ -175,14 +184,16 @@ const handleKeyDown = useCallback((e: KeyboardEvent) => {
   const handleSendMessage = useCallback(() => {
     if (message.trim() || uploadedFiles.length > 0) {
       try {
-        onSendMessage(message, uploadedFiles);
-        // 立即清空输入框和文件
+        // 先清空输入框和文件
         if (value === undefined) {
           setInternalMessage('');
         } else if (onClearMessage) {
           onClearMessage();
         }
         setUploadedFiles([]);
+        
+        // 然后发送消息
+        onSendMessage(message, uploadedFiles);
       } catch (error) {
         console.error('发送消息失败:', error);
         // 可以在这里添加错误提示，例如使用 toast 通知

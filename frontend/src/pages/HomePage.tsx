@@ -11,7 +11,6 @@ export default function HomePage() {
   const navigate = useNavigate();
 
   //直接创建新会话并跳转到Chatpage
-
   const handleSendMessage = async (message: string, files?: any[]) => {
     if (!message.trim() && (!files || files.length === 0)) return;
 

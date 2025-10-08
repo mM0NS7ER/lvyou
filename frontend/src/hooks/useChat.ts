@@ -10,7 +10,7 @@ export interface ChatMessage {
   additional_data?: {
     timestamp?: string;
     files?: Array<{
-      preview_url: string | undefined;
+      preview_url?: string;
       id: string;
       name: string;
       type: string;
@@ -19,7 +19,7 @@ export interface ChatMessage {
     }>;
   };
   files?: Array<{
-    preview_url: string | undefined;
+    preview_url?: string;
     id: string;
     name: string;
     type: string;
@@ -295,10 +295,15 @@ export const useChat = (sessionId?: string) => {
 
     setIsLoading(true);
 
-    // 立即清空输入框（在调用组件中处理）
+    // 保存原始消息用于清空输入框
+    const originalMessage = message;
+    const originalFiles = files || [];
 
     // 使用processStreamResponse处理消息
-    await processStreamResponse(message, sessionId, userId, files);
+    await processStreamResponse(originalMessage, sessionId, userId, originalFiles);
+    
+    // 处理完成后重置状态
+    setIsLoading(false);
   };
 
   // 复制消息内容
