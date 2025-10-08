@@ -83,3 +83,6 @@ config.local.json
 
 # 项目文档
 docs/
+
+# 其他
+*uploads/

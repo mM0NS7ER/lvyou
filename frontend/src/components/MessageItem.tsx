@@ -9,20 +9,27 @@ interface MessageItemProps {
 }
 
 const MessageItem: React.FC<MessageItemProps> = ({ message, onCopy, isStreaming, formatTime }) => {
+  // 判断是否是纯文件消息（只有文件，没有文本内容）
+  const isFileOnlyMessage = message.role === 'user' && 
+                          ((!message.content || message.content.trim() === '') || message.content === '发送了文件') && 
+                          message.files && 
+                          message.files.length > 0;
+
   return (
     <div
       key={message._id}
-      className={`message ${message.role} ${isStreaming ? 'streaming' : ''}`}
+      className={`message ${message.role} ${isStreaming ? 'streaming' : ''} ${isFileOnlyMessage ? 'file-only' : ''}`}
     >
       <div className="message-content">
-        <p>{message.content}</p>
+        {/* 对于纯文件消息，不显示文本内容 */}
+        {!isFileOnlyMessage && message.content && <p>{message.content}</p>}
 
         {/* 显示文件 */}
-        {(message.files && message.files.length > 0) || (message.additional_data && message.additional_data.files && message.additional_data.files.length > 0) && (
-          <div className="message-files">
-            {(message.files || message.additional_data.files || []).map((file, index) => (
+        {(message.files && message.files.length > 0) && (
+          <div className={`message-files ${isFileOnlyMessage ? 'file-only-files' : ''}`}>
+            {message.files.map((file, index) => (
               <div key={file.id || index} className="message-file">
-                {file.type.startsWith('image/') ? (
+                {file.type && file.type.startsWith('image/') ? (
                   // 图片显示缩略图
                   <div className="file-preview-image-container">
                     <img

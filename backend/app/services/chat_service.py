@@ -48,13 +48,55 @@ class ChatService:
         print(f"[DEBUG] 使用用户ID: {user_id}")
 
         # 存储用户消息
+        additional_data = {"timestamp": datetime.utcnow()}
+
+        # 如果有文件，将文件信息添加到additional_data中
+        if request.files and len(request.files) > 0:
+            # 处理文件信息，确保预览URL正确
+            processed_files = []
+            for file in request.files:
+                file_info = {
+                    "id": file.get("id"),
+                    "name": file.get("name"),
+                    "type": file.get("type"),
+                    "size": file.get("size"),
+                    "path": file.get("path"),
+                    "preview_url": file.get("preview_url")
+                }
+                processed_files.append(file_info)
+
+            additional_data["files"] = processed_files
+            print(f"[DEBUG] 用户消息包含 {len(processed_files)} 个文件")
+
+            # 确保文件信息被正确保存到数据库
+            print(f"[DEBUG] 正在保存文件信息到数据库...")
+            try:
+                for file_info in processed_files:
+                    self.chat_repository.add_chat_message(
+                        session_id=session_id,
+                        user_id=user_id,
+                        role="user",
+                        content="文件上传",
+                        message_type="file",
+                        additional_data={
+                            "timestamp": additional_data["timestamp"],
+                            "file_info": file_info
+                        }
+                    )
+                    print(f"[DEBUG] 文件信息已保存到数据库: {file_info.get('id')}")
+            except Exception as e:
+                print(f"[ERROR] 保存文件信息到数据库失败: {str(e)}")
+                # 不应该中断整个流程，继续处理
+            # 同时将文件信息存储到files字段，确保前端能正确显示
+            request.files = processed_files
+
         user_message_id = self.chat_repository.add_chat_message(
             session_id=session_id,
             user_id=user_id,
             role="user",
             content=request.message,
             message_type="text",
-            additional_data={"timestamp": datetime.utcnow()}
+            additional_data=additional_data
         )["id"]
         print(f"[DEBUG] 用户消息已保存，ID: {user_message_id}")
 
@@ -107,13 +149,61 @@ class ChatService:
             print(f"[DEBUG] 使用用户ID: {user_id}")
 
             # 存储用户消息
+            additional_data = {"timestamp": datetime.utcnow()}
+
+            # 如果有文件，将文件信息添加到additional_data中
+            if request.files and len(request.files) > 0:
+                # 处理文件信息，确保预览URL正确
+                processed_files = []
+                for file in request.files:
+                    file_info = {
+                        "id": file.get("id"),
+                        "name": file.get("name"),
+                        "type": file.get("type"),
+                        "size": file.get("size"),
+                        "path": file.get("path"),
+                        "preview_url": file.get("preview_url")
+                    }
+                    processed_files.append(file_info)
+
+                additional_data["files"] = processed_files
+                print(f"[DEBUG] 用户消息包含 {len(processed_files)} 个文件")
+
+                # 确保文件信息被正确保存到数据库
+                print(f"[DEBUG] 正在保存文件信息到数据库...")
+                try:
+                    for file_info in processed_files:
+                        # 确保file_info中的ObjectId被转换为字符串
+                        safe_file_info = {}
+                        for key, value in file_info.items():
+                            if isinstance(value, ObjectId):
+                                safe_file_info[key] = str(value)
+                            else:
+                                safe_file_info[key] = value
+
+                        self.chat_repository.add_chat_message(
+                            session_id=session_id,
+                            user_id=user_id,
+                            role="user",
+                            content="文件上传",
+                            message_type="file",
+                            additional_data={
+                                "timestamp": additional_data["timestamp"],
+                                "file_info": safe_file_info
+                            }
+                        )
+                        print(f"[DEBUG] 文件信息已保存到数据库: {safe_file_info.get('id')}")
+                except Exception as e:
+                    print(f"[ERROR] 保存文件信息到数据库失败: {str(e)}")
+                    # 不应该中断整个流程，继续处理
+
             user_message_id = self.chat_repository.add_chat_message(
                 session_id=session_id,
                 user_id=user_id,
                 role="user",
                 content=request.message,
                 message_type="text",
-                additional_data={"timestamp": datetime.utcnow()}
+                additional_data=additional_data
             )["id"]
             print(f"[DEBUG] 用户消息已保存，ID: {user_message_id}")
 

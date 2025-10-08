@@ -6,6 +6,7 @@
 
 from datetime import datetime
 from typing import Optional, List, Dict, Any
+from bson import ObjectId
 from app.db.db_config import db_config
 
 class ChatRepository:
@@ -52,7 +53,9 @@ class ChatRepository:
 
             result = self.chat_collection.insert_one(message)
             print(f"成功添加消息: {str(result.inserted_id)}")
-            return {"id": str(result.inserted_id)}
+            # 确保返回的数据可以序列化为JSON
+            message_id = str(result.inserted_id)
+            return {"id": message_id}
         except Exception as e:
             print(f"添加消息失败: {str(e)}")
             raise
@@ -121,6 +124,8 @@ class ChatRepository:
                 }).sort("timestamp", -1).limit(1)
 
                 for msg in last_message_cursor:
+                    # 确保所有字段都能被序列化
+                    msg = {k: str(v) if isinstance(v, ObjectId) else v for k, v in msg.items()}
                     sessions.append({
                         "session_id": session_id,
                         "last_message": msg["content"],

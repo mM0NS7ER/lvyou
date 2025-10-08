@@ -19,7 +19,15 @@ export default function HomePage() {
     try {
       // 生成新的会话ID
       const sessionId = `session_${Date.now()}`;
-      const userId = getUserId();
+      
+      // 生成或获取用户ID
+      let userId = localStorage.getItem('userId');
+      if (!userId) {
+        userId = `user_${Math.random().toString(36).substr(2, 9)}`;
+        localStorage.setItem('userId', userId);
+      }
+      
+      console.log('[DEBUG] 使用用户ID:', userId);
 
       // 直接跳转到聊天页面，并将消息、文件和会话ID作为状态传递
       // 我们将在Chatpage中处理实际的发送逻辑

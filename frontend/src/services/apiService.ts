@@ -400,10 +400,25 @@ export const uploadFiles = async (files: File[], sessionId?: string, userId?: st
       console.log('[DEBUG] 添加用户ID:', userId);
     }
     
-    // 发送请求
+    // 发送请求，添加认证信息
+    const userIdForHeader = userId || localStorage.getItem('userId') || `user_${Math.random().toString(36).substr(2, 9)}`;
+    console.log('[DEBUG] 最终用户ID:', userIdForHeader);
+
+    // 确保表单中的用户ID与请求头中的用户ID一致
+    if (userIdForHeader && userIdForHeader !== 'anonymous') {
+      formData.set('user_id', userIdForHeader);
+    }
+    
+    // 创建请求头对象
+    const headers: Record<string, string> = {};
+    if (userIdForHeader && userIdForHeader !== 'anonymous') {
+      headers['X-User-ID'] = userIdForHeader;
+    }
+    
     const response = await fetch('/api/upload', {
       method: 'POST',
       body: formData,
+      headers: headers
     });
     
     console.log('[DEBUG] 上传响应状态:', response.status);
@@ -432,7 +447,7 @@ export const uploadFiles = async (files: File[], sessionId?: string, userId?: st
  * @param userId 用户ID
  * @returns Promise，解析为API响应数据
  */
-export const sendMessageWithFilesToAPI = async (message: string, files?: File[], sessionId?: string, userId?: string) => {
+export const sendMessageWithFilesToAPI = async (message: string, files?: File[], sessionId?: string, userIdParam?: string) => {
   try {
     console.log('[DEBUG] 尝试连接后端API（非流式）...');
     // 使用相对路径，让Vite的代理处理转发
@@ -441,7 +456,7 @@ export const sendMessageWithFilesToAPI = async (message: string, files?: File[],
 
     // 生成新的session_id（如果未提供）
     const newSessionId = sessionId || `session_${Date.now()}`;
-    const finalUserId = userId || localStorage.getItem('userId') || `user_${Math.random().toString(36).substr(2, 9)}`;
+    const finalUserId = userIdParam || localStorage.getItem('userId') || `user_${Math.random().toString(36).substr(2, 9)}`;
     console.log('[DEBUG] 使用会话ID:', newSessionId);
     console.log('[DEBUG] 使用用户ID:', finalUserId);
 
@@ -457,6 +472,8 @@ export const sendMessageWithFilesToAPI = async (message: string, files?: File[],
       session_id: newSessionId,
       user_id: finalUserId,
     };
+
+
     
     // 如果有文件，先上传文件
     let uploadedFiles = [];

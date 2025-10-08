@@ -1,7 +1,7 @@
 
 
 
-from fastapi import APIRouter, HTTPException, Depends, Query
+from fastapi import APIRouter, HTTPException, Depends, Query, Header
 from typing import Optional
 import json
 import time
@@ -12,17 +12,29 @@ from fastapi.responses import StreamingResponse
 router = APIRouter()
 chat_service = ChatService()
 
+async def get_user_id(x_user_id: str = Header(None)) -> str:
+    """
+    从请求头中获取用户ID，如果不存在则使用默认值
+    """
+    if x_user_id:
+        return x_user_id
+    return "user_ah72m2ejx"  # 与前端默认值保持一致
+
 @router.post("/api/chat", response_model=ChatResponse)
-async def chat(request: ChatRequest):
+async def chat(request: ChatRequest, user_id: str = Depends(get_user_id)):
     """
     处理用户聊天请求（非流式版本）
 
     Args:
         request: 包含用户消息、会话ID和用户ID的请求
+        user_id: 从请求头中获取的用户ID
 
     Returns:
         包含AI回复、会话ID和消息ID的响应
     """
+    # 如果请求中没有提供用户ID，使用从请求头中获取的用户ID
+    if not request.user_id:
+        request.user_id = user_id
     print(f"[DEBUG] 收到非流式聊天请求，用户ID: {request.user_id}, 会话ID: {request.session_id}")
 
     if not request.message:
@@ -36,16 +48,20 @@ async def chat(request: ChatRequest):
     return result
 
 @router.post("/api/chat/stream")
-async def chat_stream(request: ChatRequest):
+async def chat_stream(request: ChatRequest, user_id: str = Depends(get_user_id)):
     """
     处理用户聊天请求并返回流式响应
 
     Args:
         request: 包含用户消息、会话ID和用户ID的请求
+        user_id: 从请求头中获取的用户ID
 
     Returns:
         StreamingResponse: 流式响应
     """
+    # 如果请求中没有提供用户ID，使用从请求头中获取的用户ID
+    if not request.user_id:
+        request.user_id = user_id
     print(f"[DEBUG] 收到流式聊天请求，用户ID: {request.user_id}, 会话ID: {request.session_id}")
     print(f"[DEBUG] 消息内容: {request.message[:100]}...")
 

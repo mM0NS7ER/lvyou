@@ -357,6 +357,21 @@
   border: 1px solid #e5e7eb;
 }
 
+/* 纯文件消息样式 */
+.message.file-only {
+  max-width: 50%; /* 纯文件消息比普通消息窄一些 */
+}
+
+.message.file-only .message-content {
+  padding: 8px 12px; /* 纯文件消息的内边距小一些 */
+  background-color: #f3f4f6; /* 稍微不同的背景色以区分 */
+}
+
+.message.file-only .message-files {
+  margin-top: 0; /* 纯文件消息不需要额外的上边距 */
+  padding: 4px; /* 减少内边距 */
+}
+
 .message-file {
   display: flex;
   flex-direction: column;

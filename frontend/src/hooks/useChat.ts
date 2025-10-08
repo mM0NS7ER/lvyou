@@ -55,9 +55,12 @@ export const useChat = (sessionId?: string) => {
       if (msg && userId) {
         setInitialMessage(msg);
         setInitialUserId(userId);
+        console.log("[DEBUG] 设置初始消息:", msg);
+        console.log("[DEBUG] 设置初始用户ID:", userId);
       }
       if (files && files.length > 0) {
         setInitialFiles(files);
+        console.log("[DEBUG] 设置初始文件:", files);
       }
     }
   }, [location.state]);
@@ -97,13 +100,28 @@ export const useChat = (sessionId?: string) => {
 
       // 处理历史消息，确保文件信息正确显示
       const processedMessages = data.messages?.map((msg: any) => {
-        if (msg.additional_data && msg.additional_data.files && !msg.files) {
-          return {
-            ...msg,
-            files: msg.additional_data.files
-          };
+        // 确保文件信息正确显示
+        let files = msg.files;
+        if (!files && msg.additional_data && msg.additional_data.files) {
+          files = msg.additional_data.files;
         }
-        return msg;
+
+        // 确保每个文件对象都有必要的字段
+        if (files && files.length > 0) {
+          files = files.map((file: any) => ({
+            id: file.id || file._id,
+            name: file.name || file.original_name,
+            type: file.type || file.file_type,
+            size: file.size || file.file_size,
+            path: file.path || file.file_path,
+            preview_url: file.preview_url
+          }));
+        }
+
+        return {
+          ...msg,
+          files: files || []
+        };
       }) || [];
 
       if (processedMessages.length > 0) {
@@ -125,15 +143,52 @@ export const useChat = (sessionId?: string) => {
     const messageStartTime = Date.now();
 
     try {
+      console.log("[DEBUG] 处理文件上传，文件数量:", files?.length);
+      // 如果有文件，先上传文件
+      const uploadedFiles: any[] = [];
+      if (files && files.length > 0) {
+        const fileObjects = files.map(f => {
+          if (f instanceof File) {
+            return f;
+          }
+          if (f.file && f.file instanceof File) {
+            return f.file;
+          }
+          if (f.blobData) {
+            return new File([f.blobData], f.name, { type: f.type });
+          }
+          return null;
+        }).filter(f => f !== null);
+        console.log("[DEBUG] 转换后的文件对象:", fileObjects);
+
+        const uploadResult = await uploadFiles(fileObjects, sessionId, userIdToUse);
+        if (uploadResult && uploadResult.files && uploadResult.files.length > 0) {
+          uploadedFiles.push(...uploadResult.files);
+          console.log('文件上传成功，文件数量:', uploadedFiles.length);
+          console.log('上传的文件信息:', uploadedFiles);
+        } else {
+          console.log('文件上传失败或无文件返回');
+        }
+      }
+
       // 添加用户消息到本地状态，立即显示
       const userMessage: ChatMessage = {
         _id: `temp_${Date.now()}`,
         role: 'user',
-        content: originalMessage,
+        content: originalMessage || (uploadedFiles.length > 0 ? '发送了文件' : ''),
         timestamp: new Date().toISOString(),
-        files: files,
+        files: uploadedFiles.length > 0 ? uploadedFiles.map(file => ({
+          id: file.id,
+          name: file.original_name || file.name,
+          type: file.file_type || file.type,
+          size: file.file_size || file.size,
+          path: file.file_path,
+          preview_url: file.preview_url
+        })) : [],
       };
       setMessages(prev => [...prev, userMessage]);
+      console.log('添加用户消息:', userMessage);
+      console.log('用户消息中的文件:', userMessage.files);
 
       // 在开始流式响应时生成最终的消息ID
       const finalMessageId = `msg_${Date.now()}`;
@@ -149,30 +204,157 @@ export const useChat = (sessionId?: string) => {
       setStreamingMessageId(finalMessageId);
       streamingMessageRef.current = finalMessageId;
 
-      // 如果有文件，先上传文件
-      let uploadedFiles = [];
-      if (files && files.length > 0) {
-        const fileObjects = files.map(f => {
-          if (f instanceof File) {
-            return f;
-          }
-          if (f.file && f.file instanceof File) {
-            return f.file;
-          }
-          if (f.blobData) {
-            return new File([f.blobData], f.name, { type: f.type });
-          }
-          return null;
-        }).filter(f => f !== null);
-
-        const uploadResult = await uploadFiles(fileObjects, sessionId, userIdToUse);
-        if (uploadResult && uploadResult.files) {
-          uploadedFiles = uploadResult.files;
-        }
-      }
+      // 文件已在前面上传，无需重复处理
 
       // 使用apiService发送消息到后端并获取流式响应
-      const stream = await sendMessageStream(originalMessage, sessionId, userIdToUse);
+      const requestBody: {
+        message: string;
+        session_id: string;
+        user_id: string;
+        files?: Array<{
+          id: string;
+          name: string;
+          type: string;
+          size: number;
+          path: string;
+          preview_url?: string;
+        }>;
+      } = {
+        message: originalMessage,
+        session_id: sessionId,
+        user_id: userIdToUse,
+      };
+      
+      // 如果有上传的文件，添加文件信息
+      if (uploadedFiles.length > 0) {
+        requestBody.files = uploadedFiles.map(file => ({
+          id: file.id,
+          name: file.original_name || file.name,
+          type: file.file_type || file.type,
+          size: file.file_size || file.size,
+          path: file.file_path,
+          preview_url: file.preview_url
+        }));
+        console.log('发送文件信息到后端', requestBody.files);
+      }
+      
+      // 直接发送请求，而不是使用sendMessageStream函数
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json'
+      };
+      
+      // 确保userIdToUse有效且不是默认值
+      if (userIdToUse && userIdToUse !== 'annotation=NoneType required=False default=None json_schema_extra={}') {
+        headers['X-User-ID'] = userIdToUse;
+      }
+      
+      const response = await fetch('/api/chat/stream', {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify(requestBody),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      // 检查是否为流式响应
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('text/event-stream')) {
+        console.error('[ERROR] 服务器未返回流式响应');
+        const text = await response.text();
+        console.error('[ERROR] 响应内容:', text);
+        throw new Error('服务器未返回流式响应');
+      }
+      
+      // 处理流式响应
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      
+      if (!reader) {
+        throw new Error('无法获取流式响应读取器');
+      }
+      
+      console.log('[DEBUG] 开始处理流式响应...');
+      
+      // 创建一个异步迭代器
+      const stream = {
+        async *[Symbol.asyncIterator]() {
+          let buffer = '';
+          let contentBuffer = '';
+          
+          try {
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) {
+                console.log('[DEBUG] 流式响应读取完成');
+                break;
+              }
+              
+              // 解码二进制数据为文本
+              const chunk = decoder.decode(value, { stream: true });
+              buffer += chunk;
+              
+              // 按行分割数据
+              const lines = buffer.split('\n');
+              buffer = lines.pop() || ''; // 保留最后一行可能不完整的数据
+              
+              for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                  try {
+                    const data = JSON.parse(line.slice(6));
+                    if (data.type === 'content') {
+                      contentBuffer += data.content;
+                      yield {
+                        content: data.content,
+                        type: 'content' as const,
+                        session_id: sessionId,
+                        full_content: contentBuffer
+                      };
+                    } else if (data.type === 'done') {
+                      yield {
+                        content: '',
+                        type: 'done' as const,
+                        session_id: sessionId,
+                        full_content: contentBuffer
+                      };
+                      return;
+                    } else if (data.type === 'error') {
+                      yield {
+                        content: '',
+                        type: 'error' as const,
+                        message: data.message || '未知错误',
+                        session_id: sessionId,
+                        full_content: contentBuffer
+                      };
+                      return;
+                    }
+                  } catch (e) {
+                    yield {
+                      content: '',
+                      type: 'error' as const,
+                      message: `解析数据时出错: ${e instanceof Error ? e.message : String(e)}`,
+                      session_id: sessionId,
+                      full_content: contentBuffer
+                    };
+                    return;
+                  }
+                }
+              }
+            }
+          } catch (error) {
+            yield {
+              content: '',
+              type: 'error' as const,
+              message: error instanceof Error ? error.message : '未知错误',
+              session_id: sessionId,
+              full_content: contentBuffer
+            };
+          } finally {
+            reader.releaseLock();
+          }
+        }
+      };
       let fullContent = '';
 
       for await (const chunk of stream) {

@@ -192,8 +192,11 @@ const handleKeyDown = useCallback((e: KeyboardEvent) => {
         }
         setUploadedFiles([]);
         
-        // 然后发送消息
-        onSendMessage(message, uploadedFiles);
+        // 保存要发送的文件副本
+        const filesToSend = [...uploadedFiles];
+        
+        // 然后发送消息，使用保存的文件副本
+        onSendMessage(message, filesToSend);
       } catch (error) {
         console.error('发送消息失败:', error);
         // 可以在这里添加错误提示，例如使用 toast 通知

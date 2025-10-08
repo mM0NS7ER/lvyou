@@ -1,12 +1,13 @@
 
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List, Dict, Any
 from datetime import datetime
 
 class ChatRequest(BaseModel):
     message: str
     session_id: Optional[str] = None
     user_id: Optional[str] = None
+    files: Optional[List[Dict[str, Any]]] = None
 
 class ChatResponse(BaseModel):
     response: str
