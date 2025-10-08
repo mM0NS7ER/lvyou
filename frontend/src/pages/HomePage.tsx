@@ -4,30 +4,30 @@ import FeatureCards from '../components/FeatureCards';
 import InputArea from '../components/InputArea';
 import Sidebar from '../components/Sidebar';
 import { getUserId } from '../services/apiService';
-import { ErrorBoundary } from '../components/ErrorBoundary';
 
 export default function HomePage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  
-  // 不再使用useSendMessage，直接创建新会话并跳转到Chatpage
 
-  const handleSendMessage = async (message: string) => {
-    if (!message.trim()) return;
-    
+  //直接创建新会话并跳转到Chatpage
+
+  const handleSendMessage = async (message: string, files?: any[]) => {
+    if (!message.trim() && (!files || files.length === 0)) return;
+
     setIsLoading(true);
-    
+
     try {
       // 生成新的会话ID
       const sessionId = `session_${Date.now()}`;
       const userId = getUserId();
-      
-      // 直接跳转到聊天页面，并将消息和会话ID作为状态传递
+
+      // 直接跳转到聊天页面，并将消息、文件和会话ID作为状态传递
       // 我们将在Chatpage中处理实际的发送逻辑
       navigate(`/chat/${sessionId}`, {
         state: {
           initialMessage: message,
+          initialFiles: files,
           userId
         }
       });
@@ -52,8 +52,8 @@ export default function HomePage() {
             </svg>
             {isSidebarOpen ? '收起' : '展开'}
           </button>
-          <button 
-            className="nav-button new-chat-btn" 
+          <button
+            className="nav-button new-chat-btn"
             onClick={() => {
               // 生成新的会话ID并跳转到聊天页面
               const newSessionId = `session_${Date.now()}`;
@@ -87,9 +87,9 @@ export default function HomePage() {
         </div>
 
         {/* 用户输入区 */}
-        <InputArea 
-          onSendMessage={handleSendMessage} 
-          isLoading={isLoading} 
+        <InputArea
+          onSendMessage={handleSendMessage}
+          isLoading={isLoading}
         />
       </main>
 

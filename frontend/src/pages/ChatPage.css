@@ -1,4 +1,4 @@
-
+/* 聊天页面样式 - 优化版 */
 .chat-page {
   display: flex;
   flex-direction: column;
@@ -334,7 +334,7 @@
 /* 流式消息样式 */
 .message.streaming {
   opacity: 1;
-  min-height: 24px; /* 确保即使内容为空也有最小高度 */
+  min-height: 24px;
 }
 
 .message.streaming .message-content {
@@ -345,4 +345,87 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
+/* 文件显示样式 */
+.message-files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 8px;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
 
+.message-file {
+  display: flex;
+  flex-direction: column;
+  width: 120px;
+  align-items: center;
+}
+
+.file-preview-image-container {
+  width: 100px;
+  height: 100px;
+  overflow: hidden;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  margin-bottom: 8px;
+}
+
+.file-preview-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.file-preview-icon {
+  width: 100px;
+  height: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background-color: #f9fafb;
+  margin-bottom: 8px;
+  color: #4b5563;
+}
+
+.file-download-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-decoration: none;
+  color: #4b5563;
+  width: 100%;
+  height: 100%;
+  justify-content: center;
+}
+
+.file-download-link:hover {
+  color: #1f2937;
+}
+
+.file-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.file-name {
+  font-size: 12px;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100px;
+  margin-bottom: 4px;
+}
+
+.file-size {
+  font-size: 11px;
+  color: #6b7280;
+}

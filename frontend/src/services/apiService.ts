@@ -170,11 +170,8 @@ export const sendMessageStream = async (message: string, sessionId?: string, use
                 try {
                   const data = JSON.parse(line.slice(6));
                   chunkCount++;
-                  console.log(`[DEBUG] 处理第 ${chunkCount} 个数据块，类型: ${data.type}`);
-
                   if (data.type === 'content') {
                     contentBuffer += data.content;
-                    console.log(`[DEBUG] 收到内容数据，当前内容长度: ${contentBuffer.length}`);
                     yield {
                       content: data.content,
                       type: 'content' as const,
@@ -182,7 +179,6 @@ export const sendMessageStream = async (message: string, sessionId?: string, use
                       full_content: contentBuffer
                     };
                   } else if (data.type === 'done') {
-                    console.log('[DEBUG] 收到完成信号');
                     yield {
                       content: '',
                       type: 'done' as const,
@@ -191,7 +187,6 @@ export const sendMessageStream = async (message: string, sessionId?: string, use
                     };
                     return;
                   } else if (data.type === 'error') {
-                    console.error('[ERROR] 收到错误信号:', data.message);
                     yield {
                       content: '',
                       type: 'error' as const,
@@ -202,8 +197,6 @@ export const sendMessageStream = async (message: string, sessionId?: string, use
                     return;
                   }
                 } catch (e) {
-                  console.error('[ERROR] 解析流数据时出错:', e);
-                  console.error('[ERROR] 错误行内容:', line);
                   yield {
                     content: '',
                     type: 'error' as const,
@@ -217,7 +210,6 @@ export const sendMessageStream = async (message: string, sessionId?: string, use
             }
           }
         } catch (error) {
-          console.error('[ERROR] 流式请求出错:', error);
           yield {
             content: '',
             type: 'error' as const,
@@ -227,7 +219,6 @@ export const sendMessageStream = async (message: string, sessionId?: string, use
           };
         } finally {
           reader.releaseLock();
-          console.log(`[DEBUG] 流式响应处理完成，共处理 ${chunkCount} 个数据块，${lineCount} 行数据`);
           
           // 清除相关缓存
           const userId = localStorage.getItem('userId');
@@ -239,7 +230,6 @@ export const sendMessageStream = async (message: string, sessionId?: string, use
       }
     };
   } catch (error) {
-    console.error('[ERROR] 连接后端失败:', error);
     throw new Error(`无法连接到后端服务器: ${error instanceof Error ? error.message : String(error)}`);
   }
 };
@@ -377,4 +367,153 @@ export const clearSessionsCache = (user_id: string) => {
   // 生成缓存键
   const cacheKey = `sessions:${user_id}:20`; // 使用默认limit值
   cacheService.remove(cacheKey);
+};
+
+/**
+ * 上传文件到服务器
+ * @param files 要上传的文件列表
+ * @param sessionId 会话ID
+ * @param userId 用户ID
+ * @returns Promise，解析为上传结果
+ */
+export const uploadFiles = async (files: File[], sessionId?: string, userId?: string) => {
+  try {
+    console.log('[DEBUG] 开始上传文件，文件数量:', files.length);
+    
+    // 创建 FormData 对象
+    const formData = new FormData();
+    
+    // 添加文件
+    files.forEach((file, index) => {
+      formData.append(`files`, file);
+      console.log(`[DEBUG] 添加文件 ${index + 1}:`, file.name, file.type, file.size);
+    });
+    
+    // 添加会话ID和用户ID
+    if (sessionId) {
+      formData.append('session_id', sessionId);
+      console.log('[DEBUG] 添加会话ID:', sessionId);
+    }
+    
+    if (userId) {
+      formData.append('user_id', userId);
+      console.log('[DEBUG] 添加用户ID:', userId);
+    }
+    
+    // 发送请求
+    const response = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData,
+    });
+    
+    console.log('[DEBUG] 上传响应状态:', response.status);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('[ERROR] 文件上传失败:', errorText);
+      throw new Error(`文件上传失败: ${response.status} ${errorText}`);
+    }
+    
+    const result = await response.json();
+    console.log('[DEBUG] 文件上传成功:', result);
+    
+    return result;
+  } catch (error) {
+    console.error('[ERROR] 文件上传出错:', error);
+    throw new Error(`文件上传失败: ${error instanceof Error ? error.message : String(error)}`);
+  }
+};
+
+/**
+ * 发送消息和文件到后端API（非流式版本）
+ * @param message 用户输入的消息
+ * @param files 可选的文件列表
+ * @param sessionId 会话ID
+ * @param userId 用户ID
+ * @returns Promise，解析为API响应数据
+ */
+export const sendMessageWithFilesToAPI = async (message: string, files?: File[], sessionId?: string, userId?: string) => {
+  try {
+    console.log('[DEBUG] 尝试连接后端API（非流式）...');
+    // 使用相对路径，让Vite的代理处理转发
+    const apiUrl = '/api/chat';
+    console.log('[DEBUG] API URL:', apiUrl);
+
+    // 生成新的session_id（如果未提供）
+    const newSessionId = sessionId || `session_${Date.now()}`;
+    const finalUserId = userId || localStorage.getItem('userId') || `user_${Math.random().toString(36).substr(2, 9)}`;
+    console.log('[DEBUG] 使用会话ID:', newSessionId);
+    console.log('[DEBUG] 使用用户ID:', finalUserId);
+
+    // 保存user_id到localStorage
+    localStorage.setItem('userId', finalUserId);
+    // 如果没有提供sessionId，清除旧的session_id，确保每次都是新的
+    if (!sessionId) {
+      localStorage.removeItem('sessionId');
+    }
+
+    const requestBody: any = {
+      message: message.trim(),
+      session_id: newSessionId,
+      user_id: finalUserId,
+    };
+    
+    // 如果有文件，先上传文件
+    let uploadedFiles = [];
+    if (files && files.length > 0) {
+      console.log('[DEBUG] 开始上传文件...');
+      const uploadResult = await uploadFiles(files, newSessionId, finalUserId);
+      if (uploadResult && uploadResult.files) {
+        uploadedFiles = uploadResult.files;
+        // 将文件信息添加到请求体
+        requestBody.files = uploadedFiles.map(file => ({
+          id: file.id,
+          name: file.original_name,
+          type: file.file_type,
+          size: file.file_size,
+          path: file.file_path,
+          // 对于图片文件，使用后端提供的预览URL
+          preview_url: file.preview_url
+        }));
+        console.log('[DEBUG] 文件上传完成，文件信息:', requestBody.files);
+      }
+    }
+    
+    console.log('[DEBUG] 请求体:', requestBody);
+
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    console.log('[DEBUG] 响应状态:', response.status);
+    console.log('[DEBUG] 响应头:', response.headers);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('[DEBUG] 收到回复:', data);
+
+    // 保存session_id到localStorage
+    if (data.session_id) {
+      localStorage.setItem('sessionId', data.session_id);
+    }
+
+    // 清除相关缓存
+    const userId = localStorage.getItem('userId');
+    if (userId && data.session_id) {
+      clearHistoryCache(data.session_id, userId);
+      clearSessionsCache(userId);
+    }
+
+    return data;
+  } catch (error) {
+    console.error('[ERROR] 连接后端失败:', error);
+    throw new Error(`无法连接到后端服务器: ${error instanceof Error ? error.message : String(error)}`);
+  }
 };
