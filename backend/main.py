@@ -2,10 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api import chat, health, cache, upload
 from app.db.db_config import db_config
-from dotenv import dotenv_values
-
-# 直接从.env文件读取配置
-env_config = dotenv_values()
+from app.core.config import settings
 
 # 创建FastAPI应用
 app = FastAPI(
@@ -17,7 +14,7 @@ app = FastAPI(
 # 添加CORS中间件
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=env_config.get("ALLOWED_ORIGINS", "*").split(","),  # 从.env文件读取允许的源
+    allow_origins=settings.ALLOWED_ORIGINS if isinstance(settings.ALLOWED_ORIGINS, list) else [settings.ALLOWED_ORIGINS],  # 从配置模块读取允许的源
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -45,6 +42,6 @@ async def shutdown_event():
 
 if __name__ == "__main__":
     import uvicorn
-    host = env_config.get("HOST", "0.0.0.0")
-    port = int(env_config.get("PORT", 8000))
+    host = settings.HOST
+    port = settings.PORT
     uvicorn.run(app, host=host, port=port)

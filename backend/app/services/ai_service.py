@@ -4,18 +4,14 @@ AI服务模块
 """
 
 from typing import Dict, Any, AsyncGenerator
-from dotenv import dotenv_values
 import json
 import time
 
-# 直接从.env文件读取配置
-env_config = dotenv_values()
-
 from zhipuai import ZhipuAI
-import os
+from app.core.config import settings
 
-# 获取API密钥，优先从环境变量获取，然后从.env文件获取
-zhipuai_api_key = os.getenv('ZHIPU_API_KEY') or os.getenv('AI_API_KEY')
+# 获取API密钥
+zhipuai_api_key = settings.AI_API_KEY
 
 # 初始化客户端，只有在有API密钥时才初始化
 client = None
@@ -32,10 +28,10 @@ class AIService:
 
     def __init__(self):
         """初始化AI服务"""
-        # 从.env文件中读取AI模型配置
-        self.ai_model = env_config.get("AI_MODEL", "glm-4")
-        self.api_key = env_config.get("AI_API_KEY")
-        self.system_prompt = env_config.get("SYSTEM_PROMPT", "你是一个专业的法律助手")
+        # 从配置中读取AI模型配置
+        self.ai_model = settings.AI_MODEL
+        self.api_key = settings.AI_API_KEY
+        self.system_prompt = settings.SYSTEM_PROMPT
 
         # 这里可以初始化AI模型，如OpenAI、Claude等
         if self.api_key:
@@ -60,7 +56,7 @@ class AIService:
             print(f"[DEBUG] 使用模型 {self.ai_model} 生成回答，系统提示: {self.system_prompt}")
 
             response = client.chat.completions.create(
-                model="glm-4",
+                model=self.ai_model,
                 messages=[
                     {"role":"system","content":self.system_prompt},
                     {"role":"user","content": message},
@@ -96,7 +92,7 @@ class AIService:
                 # 使用智谱AI的流式响应功能
                 print("[DEBUG] 调用智谱AI流式API...")
                 response = client.chat.completions.create(
-                    model="glm-4",
+                    model=self.ai_model,
                     messages=[
                         {"role":"system","content":self.system_prompt},
                         {"role":"user","content": message},

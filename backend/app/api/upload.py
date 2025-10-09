@@ -120,3 +120,35 @@ async def upload_files(
     except Exception as e:
         print(f"[ERROR] 文件上传失败: {str(e)}")
         raise HTTPException(status_code=500, detail=f"文件上传失败: {str(e)}")
+
+@router.delete("/api/files/{file_id}")
+async def delete_file(file_id: str, user_id: Optional[str] = None):
+    """
+    删除指定文件
+
+    Args:
+        file_id: 文件ID
+        user_id: 可选的用户ID
+
+    Returns:
+        删除结果
+    """
+    try:
+        # 获取文件信息
+        file_info = file_service.get_file_info(file_id)
+        if not file_info:
+            raise HTTPException(status_code=404, detail="文件不存在")
+        
+        # 如果提供了user_id，验证是否匹配
+        if user_id and file_info.get("user_id") != user_id:
+            raise HTTPException(status_code=403, detail="无权删除此文件")
+        
+        # 删除文件
+        deleted = await file_service.delete_file(file_id)
+        if deleted:
+            return {"status": "success", "message": "文件删除成功"}
+        else:
+            raise HTTPException(status_code=500, detail="文件删除失败")
+    except Exception as e:
+        print(f"[ERROR] 文件删除失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"文件删除失败: {str(e)}")

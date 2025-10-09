@@ -11,3 +11,5 @@ PyMuPDF==1.23.8
 python-docx==0.8.11
 Pillow==10.0.0
 pytesseract==0.3.10
+# 阿里云OSS SDK
+oss2==2.18.4
